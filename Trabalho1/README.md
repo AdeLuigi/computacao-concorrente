@@ -60,12 +60,13 @@ Essa função é responsável por receber um valor e retornar o quadrado deste v
 
 **Variáveis Globais**
 As variáveis globais são constituídas por:
+```
 pthread_mutex_t mutexsum;
 double sum_conc = 0.0, h;
 double sum_seq = 0.0;
 float *arr;
 int nthreads;
-
+```
 **Estrutura do Dado**
 Criamos uma struck para armazenar a dimensão, o id e o X e Y do dado
 
@@ -77,14 +78,16 @@ struct parametros {
 };
 
 **Entrando com os dados**
+```
   printf("\nEnter the no. of sub-intervals and threads: ");
   scanf("%lld",&dim);
   printf("\nEnter the initial limit: ");
   scanf("%lf",&a1);
   printf("\nEnter the final limit: ");
   scanf("%lf",&b1);
-
+```
 **Alocação dos dados**
+```
 args =(struct parametros *) malloc(sizeof(struct parametros) *nthreads);
     if(args == NULL) {
         fprintf(stderr, "ERRO-malloc\n");
@@ -106,8 +109,9 @@ for(int i = 0; i < dim; i++) {
         arr[i] = a1 + i*h;
     
 }
-
+```
 **Solução sequencial do problema**
+```
 start1 = clock();
 
    for(int i=0;i<dim;i++){
@@ -119,8 +123,9 @@ start1 = clock();
 
  end1 = clock();
 time1 = ((double) (end1 - start1)) / CLOCKS_PER_SEC;
-
+```
 **Criação das threads**
+```
 for(long long int i = 0; i < nthreads; i++) {
     (args + i)->dimensao = dim;
     (args + i)->id = i;
@@ -133,8 +138,9 @@ for(long long int i = 0; i < nthreads; i++) {
         return 3;
     }
 }
-
-**Calculo da integral numerica**
+```
+**Calculo da integral numerica e liberação da memória alocada dinamicamente**
+```
 integral_conc=(h/2)*(function(a1)+function(b1)+2*sum_conc);
 
 
@@ -147,13 +153,14 @@ free(arr);
 
 end2 = clock();
 time2 = ((double) (end2 - start2)) / CLOCKS_PER_SEC;
-
+```
 
 **Saída do programa**
-
+```
 printf("\nThe Sequencial Integral is: %lf\n",integral_seq);
 printf("\nThe Concorrency Integral is: %lf\n",integral_conc);
 
 
 printf("\nTime_Seq = %lfs\n", time1);
 printf("\nTime_Conc = %lfs\n", time2);
+```
