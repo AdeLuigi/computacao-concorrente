@@ -67,14 +67,14 @@ int nthreads;
 ```
 **Estrutura do Dado**
 Criamos uma struck para armazenar a dimensão, o id e o X e Y do dado
-
+```
 struct parametros {
     long long int id;
     long long int dimensao;
     double x;
     double y;
 };
-
+```
 **Entrando com os dados**
 ```
   printf("\nEnter the no. of sub-intervals and threads: ");
