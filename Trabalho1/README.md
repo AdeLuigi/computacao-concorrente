@@ -55,8 +55,6 @@ Time = 7.657737s
 
 ## Para uma maior compreensão do código, iremos explica-lo separando por partes
 
-**function**
-Essa função é responsável por receber um valor e retornar o quadrado deste valor
 
 **Variáveis Globais**
 As variáveis globais são constituídas por:
