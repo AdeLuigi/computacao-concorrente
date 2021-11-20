@@ -4,7 +4,7 @@
 //Função que a thread irá executar
 
 void * tarefa(void *arg){
-    printf("Olá, sou a\n");
+    printf("Olá, sou a thread nova\n");
     pthread_exit(NULL); // Essa função é um retorno especial para funções concorrentes dentro da lib pthread.h, este NULL é o retorno mais genérico possível.
 }
 
@@ -14,7 +14,7 @@ int main(void)
     pthread_t identificadorThread;
 
     if(pthread_create(&identificadorThread, NULL, tarefa, NULL)){//Função de criação de concorrência, essa função recebe 4 argumentos
-        printf("Deu ruim em algo aaqui");//verificação de erros
+        printf("Deu ruim em algo aqui");//verificação de erros
     } 
     /* sendo eles: 
         -> 1° Identificador da thread (passando como endereço &)
