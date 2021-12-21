@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
    pthread_create( & threads[0], NULL, T5, NULL);
    pthread_create( & threads[1], NULL, T3, NULL);
    pthread_create( & threads[2], NULL, T2, NULL);
-    pthread_create( & threads[4], NULL, T4, NULL);
+   pthread_create( & threads[4], NULL, T4, NULL);
    pthread_create( & threads[3], NULL, T1, NULL);
 
    /* Espera todas as threads completarem */
