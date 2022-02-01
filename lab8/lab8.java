@@ -12,7 +12,7 @@ class LE {
     LE() {
         this.leit = 0; //leitores lendo (0 ou mais)
         this.escr = 0; //escritor escrevendo (0 ou 1)
-        this.var_compart = 0; //variável especificada pelo problema.
+        this.var_compart = 0; //variável compartilhada
     }
 
     //Entrada para leitores
@@ -23,7 +23,7 @@ class LE {
                 wait();  //bloqueia pela condição lógica da aplicação
             }
             this.leit++;  //registra que há mais um leitor presente
-            if (this.var_compart%2==0){ //dependendo do valor da variável compartilhada, imprimimos seu valor
+            if (this.var_compart%2==0){ //verifica par ou impar
                 System.out.println ("LeitorLendo("+id+"); -|- par = " + this.var_compart);
             }else {
                 System.out.println ("LeitorLendo("+id+"); -|- impar = " + this.var_compart);
@@ -66,7 +66,7 @@ class LE {
 class Leitor extends Thread {
     int id; //identificador da thread
     int delay; //atraso bobo
-    LE monitor;//objeto monitor para coordenar a lógica de execução das threads
+    LE monitor;//objeto monitor
 
     //Construtor
     Leitor (int id, int delayTime, LE m) {
