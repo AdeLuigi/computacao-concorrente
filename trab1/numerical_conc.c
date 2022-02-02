@@ -1,10 +1,7 @@
 /********************************************************************* 
- Example 	: pthread-numerical-integration.c
- Objective 	: Calculate the function x² Value using Trapezoidal Rule Integration 
- Input      : Number Of Intervals, Initial limit and Final limit;
- Output     :Result using Trapezoidal rule
-	         Time Taken for Trapezoidal Computation(in Seconds).
- Created      : January-2021
+Trab 1
+aluno: Ademario Vitor
+DRE 118143148
     
 ***********************************************************************/
 
