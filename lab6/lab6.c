@@ -15,6 +15,7 @@
 int bloqueadas = 0;
 pthread_mutex_t x_mutex;
 pthread_cond_t x_cond;
+int dimensao, *vetor; // dimensao passada pelo usuário e vetor
 
 //funcao barreira
 void barreira(int nthreads) {
@@ -34,26 +35,49 @@ void barreira(int nthreads) {
 void *tarefa (void *arg) {
   int id = *(int*)arg;
   int boba1, boba2;
+  long int somatorio = 0;
 
-  for (int passo=0; passo < PASSOS; passo++) {
-    printf("Thread %d: passo=%d\n", id, passo);
+  for (int passo=0; passo < dimensao; passo++) {
 
-    /* faz alguma coisa... */
-    boba1=100; boba2=-100; while (boba2 < boba1) boba2++;
+    for (int i = 0; i < dimensao; i++)
+    {
+      somatorio += *(vetor+i);
+    }
+    barreira(dimensao);
 
-    //sincronizacao condicional
-    barreira(NTHREADS);
+    vetor[id] = (rand() % 10);
+    barreira(dimensao);
+
   }
-  pthread_exit(NULL);
+  pthread_exit((void *) somatorio);
 }
 
 /* Funcao principal */
 int main(int argc, char *argv[]) {
   pthread_t threads[NTHREADS];
   int id[NTHREADS];
+  long int somatorio;
+  long int *resultado;
+
   /* Inicilaiza o mutex (lock de exclusao mutua) e a variavel de condicao */
   pthread_mutex_init(&x_mutex, NULL);
   pthread_cond_init (&x_cond, NULL);
+
+    if(argc < 2) {
+        printf("Insira o %s a dimensao do vetor\n", argv[0]);
+        exit(1);
+    }
+
+    dimensao = atoi(argv[1]);
+    resultado = (long int*) malloc(sizeof(long int)*dimensao);
+
+    //alocaca memorias
+    vetor = (int*) malloc(sizeof(int)*dimensao);
+    if (vetor == NULL) {printf("ERRO--malloc\n"); return 2;}
+
+    //inicia o vetor
+    for(int i=0;i<dimensao;i++){*(vetor+i)=rand() %10;}
+
 
   /* Cria as threads */
   for(int i=0;i<NTHREADS;i++) {
@@ -63,7 +87,8 @@ int main(int argc, char *argv[]) {
 
   /* Espera todas as threads completarem */
   for (int i = 0; i < NTHREADS; i++) {
-    pthread_join(threads[i], NULL);
+        pthread_join(threads[i],(void **)&somatorio);
+        resultado[i] = somatorio;
   }
   printf ("FIM.\n");
 
