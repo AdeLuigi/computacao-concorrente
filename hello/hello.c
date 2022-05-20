@@ -6,61 +6,152 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "timer.h"
+#include <math.h>
 
-#define NTHREADS 2
+int * vetorEntradaGlobal;
+float * vetorSaidaGlobalConcorrente;
+float * vetorSaidaGlobalSequencial;
+
 
 int s = 0; //variavel compartilhada entre as threads
 pthread_mutex_t mutex; //variavel de lock para exclusao mutua
 
+typedef struct {
+    int threadId;
+    int dim;
+    int nthreads;
+} t_objetoConcorrente;
+
+
+int ehPrimo(long long int n) {
+        if (n<=1){
+            return 0;
+        }   
+        if (n==2){ 
+            return 1;
+        }
+        if (n%2==0){ 
+            return 0;
+        }
+        for (int i=3; i<sqrt(n)+1; i+=2){
+            if(n%i==0){ 
+                return 0;
+            }
+        }
+    return 1;
+}
+
+void processaPrimosSequencial(int vetorEntrada[], int dim) {
+    for(int i=0; i<dim; i++) {
+        //printf("%d ", vetorEntrada[i]);
+        if (ehPrimo(vetorEntrada[i])){
+            vetorSaidaGlobalSequencial[i] = sqrt(vetorEntrada[i]);
+        }else {
+            vetorSaidaGlobalSequencial[i] = vetorEntrada[i];
+        }
+    }
+}
+
 //funcao executada pelas threads
-void * ExecutaTarefa(void * threadid) {
-    int i, tid = * (int * ) threadid;
-    printf("Thread : %d esta executando...\n", tid);
-    for (i = 0; i < 1000000; i++) {
+void * processaPrimosConcorrente(void *dado) {
+
+    t_objetoConcorrente *dados = (t_objetoConcorrente *) dado;
+    printf("%d",dados->threadId);
+    for (int i = dados->threadId; i < dados->dim; i += dados->nthreads) {
         //--entrada na SC
         pthread_mutex_lock( & mutex);
-        //--SC
-        s++; //incrementa o contador de tarefas realizadas 
-        //--saida da SC
+
+            if (ehPrimo(vetorEntradaGlobal[i])){
+                vetorSaidaGlobalConcorrente[i] = sqrt(vetorEntradaGlobal[i]);
+            }else {
+                vetorSaidaGlobalConcorrente[i] = vetorEntradaGlobal[i];
+            }
         pthread_mutex_unlock( & mutex);
     }
-    printf("Thread : %d terminou!\n", tid);
+
     pthread_exit(NULL);
 }
 
 int main(int argc, char * argv[]) {
-    pthread_t tid[NTHREADS];
-    int t, id[NTHREADS];
-    double ini, fim;
+    int t, nthreads;
+    long long int dim;
+    double tempoInicioSequencial, tempoFinalSequencial;
+    double tempoInicioConcorrente, tempoFinalConcorrente;
+    t_objetoConcorrente *dados;
 
-    GET_TIME(ini);
+    GET_TIME(tempoInicioSequencial);
 
-    int * vetor;
-    vetor = malloc(10 * sizeof(int));
+    if(argc<3) {
+      printf("Digite: %s <dimensao do array> <numero de threads>\n", argv[0]);
+      return 1;
+    }
+
+    dim = atoll(argv[1]);
+    nthreads = atoi(argv[2]);
+
+    pthread_t tid[nthreads];
+    int id[nthreads];
+
+    vetorEntradaGlobal = malloc(dim * sizeof(int));
+    vetorSaidaGlobalSequencial = malloc(dim * sizeof(int));
+    vetorSaidaGlobalConcorrente = malloc(dim * sizeof(int));
+
+    srand ( time(NULL) );
+    for (int index = 0; index < dim; index++)
+    {
+        vetorEntradaGlobal[index] = rand()%1000;
+    }
+
+    GET_TIME(tempoInicioSequencial);
+    processaPrimosSequencial(vetorEntradaGlobal, dim );
+    GET_TIME(tempoFinalSequencial);
 
     //--inicilaiza o mutex (lock de exclusao mutua)
-
-    pthread_mutex_init( & mutex, NULL);
-
-    for (t = 0; t < NTHREADS; t++) {
+    //pthread_mutex_init( & mutex, NULL);
+    GET_TIME(tempoInicioConcorrente);
+    for (t = 0; t < nthreads; t++) {
+        dados = malloc(sizeof(t_objetoConcorrente));
         id[t] = t;
-        if (pthread_create( & tid[t], NULL, ExecutaTarefa, (void * ) & id[t])) {
+
+        dados->dim = dim;
+        dados->threadId = id[t];
+        dados->nthreads = nthreads;
+
+        if (pthread_create( & tid[t], NULL, processaPrimosConcorrente, (void*) dados)) {
             printf("--ERRO: pthread_create()\n");
             exit(-1);
         }
     }
     //--espera todas as threads terminarem
-    for (t = 0; t < NTHREADS; t++) {
+    for (t = 0; t < nthreads; t++) {
         if (pthread_join(tid[t], NULL)) {
             printf("--ERRO: pthread_join() \n");
             exit(-1);
         }
     }
-    pthread_mutex_destroy( & mutex);
+    GET_TIME(tempoFinalConcorrente);
+    //pthread_mutex_destroy( & mutex);
 
-    GET_TIME(fim);
+    printf("Tempo sequencial = %lf\n", tempoFinalSequencial - tempoInicioSequencial);
+    printf("Tempo concorrente = %lf\n", tempoFinalConcorrente - tempoInicioConcorrente);
 
-    printf("Valor de s = %d\n", s);
-    printf("Tempo = %lf\n", fim - ini);
+    // for (int index = 0; index < dim; index++)
+    // {
+    //     printf("%d ", vetorEntradaGlobal[index]);
+    // }
+    // printf("\n");
+    // for (int index = 0; index < dim; index++)
+    // {
+    //     printf("%f ", vetorSaidaGlobalSequencial[index]);
+    // }
+
+    // printf("\n");
+
+    // for (int index = 0; index < dim; index++)
+    // {
+    //     printf("%f ", vetorSaidaGlobalConcorrente[index]);
+    // }
+
+    
     pthread_exit(NULL);
 }
