@@ -1,53 +1,66 @@
+/* Disciplina: Computacao Concorrente */
+/* Prof.: Silvana Rossetto */
+/* Codigo: Comunicação entre threads usando variável compartilhada e exclusao mutua com bloqueio */
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
+#include "timer.h"
 
-#define numeroThreads 10
+#define NTHREADS 2
 
-int vetor[numeroThreads]; // variável global que será acessada por cada thread
+int s = 0; //variavel compartilhada entre as threads
+pthread_mutex_t mutex; //variavel de lock para exclusao mutua
 
-//Função que a thread irá executar
-void * tarefa(void *arg){
-
-    int identificadorThread = * (int *) arg;
-    vetor[identificadorThread] = identificadorThread;
-
-    printf("Olá, sou a thread nova %d\n", identificadorThread);
-    pthread_exit(NULL); // Essa função é um retorno especial para funções concorrentes dentro da lib pthread.h, este NULL é o retorno mais genérico possível.
+//funcao executada pelas threads
+void * ExecutaTarefa(void * threadid) {
+    int i, tid = * (int * ) threadid;
+    printf("Thread : %d esta executando...\n", tid);
+    for (i = 0; i < 1000000; i++) {
+        //--entrada na SC
+        pthread_mutex_lock( & mutex);
+        //--SC
+        s++; //incrementa o contador de tarefas realizadas 
+        //--saida da SC
+        pthread_mutex_unlock( & mutex);
+    }
+    printf("Thread : %d terminou!\n", tid);
+    pthread_exit(NULL);
 }
 
+int main(int argc, char * argv[]) {
+    pthread_t tid[NTHREADS];
+    int t, id[NTHREADS];
+    double ini, fim;
 
-int main(void)
-{
-    pthread_t identificadorThread[numeroThreads];
-    int identificadorLocalThread[numeroThreads];
- 
-    for (size_t i = 0; i < numeroThreads; i++)
-    {
-        identificadorLocalThread[i] = i;
-        if(pthread_create(&identificadorThread[i], NULL, tarefa, (void *)&identificadorLocalThread[i])){//Função de criação de concorrência, essa função recebe 4 argumentos
-            printf("Deu ruim em algo aqui");//verificação de erros
-        } 
-        /* sendo eles: 
-        -> 1° Identificador da thread (passando como endereço &)
-        -> 2° Atributos para a thread (neste caso usamos NULL, pois não queremos passar nada)
-        -> 3° Função que a thread irá executar
-        -> 4° Argumentos que a função vai receber
-    */
-    }
-    
-    for (size_t i = 0; i < numeroThreads; i++)
-    {
-        if(pthread_join(identificadorThread[i], NULL)){//usaremos essa função para esperar todas as threads terminarem e assim executar a thread principal, que é a main
-            printf("Deu ruim em algo aqui");//verificação de erros
-        } 
-    }
+    GET_TIME(ini);
 
-    for (size_t i = 0; i < numeroThreads; i++)
-    {
-        printf("%d ",vetor[i]);//verificação de erros
-    }
+    int * vetor;
+    vetor = malloc(10 * sizeof(int));
 
-    printf("\nOlá, sou a thread principal\n");
-    pthread_exit(NULL); //Precisamos chamar essa função para dar um exit na thread da main
-    return 0;
+    //--inicilaiza o mutex (lock de exclusao mutua)
+
+    pthread_mutex_init( & mutex, NULL);
+
+    for (t = 0; t < NTHREADS; t++) {
+        id[t] = t;
+        if (pthread_create( & tid[t], NULL, ExecutaTarefa, (void * ) & id[t])) {
+            printf("--ERRO: pthread_create()\n");
+            exit(-1);
+        }
+    }
+    //--espera todas as threads terminarem
+    for (t = 0; t < NTHREADS; t++) {
+        if (pthread_join(tid[t], NULL)) {
+            printf("--ERRO: pthread_join() \n");
+            exit(-1);
+        }
+    }
+    pthread_mutex_destroy( & mutex);
+
+    GET_TIME(fim);
+
+    printf("Valor de s = %d\n", s);
+    printf("Tempo = %lf\n", fim - ini);
+    pthread_exit(NULL);
 }
