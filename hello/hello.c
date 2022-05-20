@@ -56,17 +56,20 @@ void processaPrimosSequencial(int vetorEntrada[], int dim) {
 void * processaPrimosConcorrente(void *dado) {
 
     t_objetoConcorrente *dados = (t_objetoConcorrente *) dado;
-    printf("%d",dados->threadId);
     for (int i = dados->threadId; i < dados->dim; i += dados->nthreads) {
         //--entrada na SC
-        pthread_mutex_lock( & mutex);
+
 
             if (ehPrimo(vetorEntradaGlobal[i])){
+                pthread_mutex_lock( & mutex);
                 vetorSaidaGlobalConcorrente[i] = sqrt(vetorEntradaGlobal[i]);
+                pthread_mutex_unlock( & mutex);
             }else {
+                pthread_mutex_lock( & mutex);
                 vetorSaidaGlobalConcorrente[i] = vetorEntradaGlobal[i];
+                pthread_mutex_unlock( & mutex);
             }
-        pthread_mutex_unlock( & mutex);
+        
     }
 
     pthread_exit(NULL);
