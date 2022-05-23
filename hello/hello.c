@@ -22,6 +22,15 @@ typedef struct {
     int nthreads;
 } t_objetoConcorrente;
 
+int checaArrays(float vetorConcorrente[],float vetorSequencial[], int dim){
+    for (int i = 0; i < dim; i++)
+    {
+        if(vetorConcorrente[i] != vetorSequencial[i]){
+            return 0;
+        }
+    }
+    return 1;  
+}
 
 int ehPrimo(long long int n) {
         if (n<=1){
@@ -135,8 +144,18 @@ int main(int argc, char * argv[]) {
     GET_TIME(tempoFinalConcorrente);
     //pthread_mutex_destroy( & mutex);
 
+    int vetoresSaoIguais = checaArrays(vetorSaidaGlobalConcorrente, vetorSaidaGlobalSequencial, dim);
+
     printf("Tempo sequencial = %lf\n", tempoFinalSequencial - tempoInicioSequencial);
     printf("Tempo concorrente = %lf\n", tempoFinalConcorrente - tempoInicioConcorrente);
+
+    if (vetoresSaoIguais == 1)
+    {
+        printf("\n Os vetores são iguais");
+    }else{
+        printf("\n Os vetores são diferentes");
+    }
+    
 
     // for (int index = 0; index < dim; index++)
     // {
