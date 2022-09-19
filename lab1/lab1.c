@@ -14,6 +14,7 @@
 #define dezmil 10000
 
 float vetor[dezmil]; // variável global que será acessada por cada thread
+float vetorVerificacao[dezmil];
 
 //cria a estrutura de dados para armazenar os argumentos da thread
 typedef struct {
@@ -24,19 +25,19 @@ typedef struct {
 void *aumaDezPorcento (void *arg) {
   t_Args *args = (t_Args *) arg;
 
-  printf("Sou a thread %d de %d threads\n", args->idThread, args->nThreads);
-
   /* Utilizei a seguinte lógica, a thread 0 ficará responsável por fazer os quadrados da posição 0 até a 4999 e a thread 1 vai fazer os quadrados da posição 5000 até 9999, completando assim os 10000 elementos */
   if(args->idThread == 0){
     for (size_t i = 0; i < 5000; i++)
     {
       vetor[i] = i*1.1;
+      vetorVerificacao[i] = i;
     }
     
   }else{
     for (size_t i = 5000; i < 10000; i++)
     {
       vetor[i] = i*1.1;
+      vetorVerificacao[i] = i;
     }
   }
 
@@ -48,6 +49,18 @@ void *aumaDezPorcento (void *arg) {
 bool fequal(float a, float b, float epsilon)
 {
  return a-b < epsilon;
+}
+
+void verifica(){
+  for (int i = 0; i < dezmil; i++)
+  {
+    if (!fequal(vetor[i], vetorVerificacao[i]*1.1, 0.00001 )){
+    printf("\n calculo incorreto");
+    return ;
+    }
+  }
+  printf("\n calculo correto \n");
+  return ;
 }
 
 //funcao principal do programa
@@ -64,7 +77,7 @@ int main() {
     arg->idThread = thread; 
     arg->nThreads = NTHREADS; 
     
-    printf("--Cria a thread %d\n", thread);
+    // printf("--Cria a thread %d\n", thread);
     if (pthread_create(&tid_sistema[thread], NULL, aumaDezPorcento, (void*) arg)) {
       printf("--ERRO: pthread_create()\n"); exit(-1);
     }
@@ -77,14 +90,11 @@ int main() {
     } 
   }
 
-  for (size_t i = 0; i < dezmil; i++)
-  {
-    printf("%lf ",vetor[i]);//verificação de erros
-  }
-
-  if (fequal(vetor[1], 1.100000, 0.00001 )){
-    printf("\n calculo correto");
-  }
+  // for (size_t i = 0; i < dezmil; i++)
+  // {
+  //   printf("%lf ",vetor[i]);//verificação de erros
+  // }
+  verifica();
 
   printf("--Thread principal terminou\n");
   pthread_exit(NULL);
