@@ -17,10 +17,14 @@ int main(int argc, char*argv[]) {
    int linhasMatriz2, colunasMatriz2; //dimensoes da matrizUM
    long long int tamMatriz1; //qtde de elementos na matrizUM
    long long int tamMatriz2; //qtde de elementos na matrizUM
+   long long int tamSaida; //qtde de elementos na matrizUM
    FILE * matriz1; //descritor do arquivo de entrada
    FILE * matriz2; //descritor do arquivo de entrada
    size_t retMatriz1; //retorno da funcao de leitura no arquivo de entrada
    size_t retMatriz2; //retorno da funcao de leitura no arquivo de entrada
+
+   FILE * descritorArquivo; //descritor do arquivo de saida
+   size_t ret; //retorno da funcao de escrita no arquivo de saida
    
    //recebe os argumentos de entrada
    if(argc < 4) {
@@ -65,6 +69,7 @@ int main(int argc, char*argv[]) {
    }
    tamMatriz1 = linhasMatriz1 * colunasMatriz1; //calcula a qtde de elementos da matrizUM
    tamMatriz2 = linhasMatriz2 * colunasMatriz2; //calcula a qtde de elementos da matrizUM
+   tamSaida = linhasMatriz2 * colunasMatriz1; //calcula a qtde de elementos da matrizUM
 
    //aloca memoria para a matrizUM
    matrizUM = (float*) malloc(sizeof(float) * tamMatriz1);
@@ -77,7 +82,7 @@ int main(int argc, char*argv[]) {
       fprintf(stderr, "Erro de alocao da memoria da matrizDOIS\n");
       return 3;
    }
-   matrizSAIDA= (float*) malloc(sizeof(float) * tamMatriz2);
+   matrizSAIDA= (float*) malloc(sizeof(float) * tamSaida);
    if(!matrizSAIDA) {
       fprintf(stderr, "Erro de alocao da memoria da matrizDOIS\n");
       return 3;
@@ -99,15 +104,34 @@ int main(int argc, char*argv[]) {
    GET_TIME(inicio);
    //imprime a matrizUM na saida padrao
    for(int i=0; i<linhasMatriz1; i++) { 
-      for(int j=0; j<colunasMatriz1; j++){
+      for(int j=0; j<colunasMatriz2; j++){
          //fprintf(stdout, "%.6f ", matrizUM[i*colunasMatriz1+j]);
-         for (int k = 0; k < linhasMatriz1; k++)
+         for (int k = 0; k < linhasMatriz2; k++)
          {
             //saida[i*args->dim + j] += mat[i*args->dim + k] * matriz2[k*args->dim + j] ;
-            matrizSAIDA[i*colunasMatriz1+j] += matrizUM[i*linhasMatriz1 + k] * matrizDOIS[k*linhasMatriz1 + j] ;
+            matrizSAIDA[i*colunasMatriz1+j] += matrizUM[i*colunasMatriz1 + k] * matrizDOIS[k*colunasMatriz1 + j];
          }
       }
    }
+
+      //escreve a matriz no arquivo
+   //abre o arquivo para escrita binaria
+   descritorArquivo = fopen(argv[3], "wb");
+   if(!descritorArquivo) {
+      fprintf(stderr, "Erro de abertura do arquivo\n");
+      return 3;
+   }
+   //escreve numero de linhas e de colunas
+   ret = fwrite(&linhasMatriz2, sizeof(int), 1, descritorArquivo);
+   //escreve os elementos da matriz
+   ret = fwrite(&colunasMatriz2, sizeof(int), 1, descritorArquivo);
+   ret = fwrite(matrizSAIDA, sizeof(float), tamSaida, descritorArquivo);
+   if(ret < tamSaida) {
+      fprintf(stderr, "Erro de escrita no  arquivo\n");
+      return 4;
+   }
+
+
    GET_TIME(fim);
    delta = fim - inicio;
 
