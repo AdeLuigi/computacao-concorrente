@@ -1,114 +1,125 @@
-/* Multiplicacao de matriz-matriz2or (considerando matrizes quadradas) */
+/* Programa que le um arquivo binario com dois valores inteiros (indicando as dimensoes de uma matrizUM) 
+ * e uma sequencia com os valores da matrizUM (em float)
+ * Entrada: nome do arquivo de entrada
+ * Saida: valores da matrizUM escritos no formato texto (com 6 casas decimais) na saida padrao 
+ * */
+
 #include<stdio.h>
 #include<stdlib.h>
-#include<pthread.h>
 #include "timer.h"
 
-float *mat; //matriz de entrada
-float *matriz2; //matriz2or de entrada
-float *saida; //matriz2or de saida
-int nthreads; //numero de threads
-
-typedef struct{
-   int id; //identificador do elemento que a thread ira processar
-   int dim; //dimensao das estruturas de entrada
-} tArgs;
-
-//funcao que as threads executarao
-void * tarefa(void *arg) {
-   tArgs *args = (tArgs*) arg;
-   //printf("Thread %d\n", args->id);
-   for(int i=args->id; i<args->dim; i+=nthreads){
-      for(int j=0; j<args->dim; j++){
-         for (int k = 0; k < args->dim; k++)
-         {
-            saida[i*args->dim + j] += mat[i*args->dim + k] * matriz2[k*args->dim + j] ;
-         }
-         
-      }
-   }
-         
-   pthread_exit(NULL);
-}
-
-//fluxo principal
-int main(int argc, char* argv[]) {
-   int dim; //dimensao da matriz de entrada
-   pthread_t *tid; //identificadores das threads no sistema
-   tArgs *args; //identificadores locais das threads e dimensao
+int main(int argc, char*argv[]) {
    double inicio, fim, delta;
+   float *matrizUM; //matrizUM que será carregada do arquivo
+   float *matrizDOIS; //matrizUM que será carregada do arquivo
+   float *matrizSAIDA; //matrizUM que será carregada do arquivo
+   int linhasMatriz1, colunasMatriz1; //dimensoes da matrizUM
+   int linhasMatriz2, colunasMatriz2; //dimensoes da matrizUM
+   long long int tamMatriz1; //qtde de elementos na matrizUM
+   long long int tamMatriz2; //qtde de elementos na matrizUM
+   FILE * matriz1; //descritor do arquivo de entrada
+   FILE * matriz2; //descritor do arquivo de entrada
+   size_t retMatriz1; //retorno da funcao de leitura no arquivo de entrada
+   size_t retMatriz2; //retorno da funcao de leitura no arquivo de entrada
    
-   GET_TIME(inicio);
-   //leitura e avaliacao dos parametros de entrada
-   if(argc<3) {
-      printf("Digite: %s <dimensao da matriz> <numero de threads>\n", argv[0]);
+   //recebe os argumentos de entrada
+   if(argc < 4) {
+      fprintf(stderr, "Digite: %s <o primeiro arquivo entrada> <o segundo arquivo entrada> <arquivo de saida>\n", argv[0]);
       return 1;
    }
-   dim = atoi(argv[1]);
-   nthreads = atoi(argv[2]);
-   if (nthreads > dim) nthreads=dim;
-
-   //alocacao de memoria para as estruturas de dados
-   mat = (float *) malloc(sizeof(float) * dim * dim);
-   if (mat == NULL) {printf("ERRO--malloc\n"); return 2;}
-   matriz2 = (float *) malloc(sizeof(float) * dim * dim);
-   if (matriz2 == NULL) {printf("ERRO--malloc\n"); return 2;}
-   saida = (float *) malloc(sizeof(float) * dim * dim);
-   if (saida == NULL) {printf("ERRO--malloc\n"); return 2;}
-
-   //inicializacao das estruturas de dados de entrada e saida
-   for(int i=0; i<dim; i++) {
-      for(int j=0; j<dim; j++){
-         mat[i*dim+j] = 1; 
-         matriz2[i*dim+j] = 1; 
-         saida[i*dim+j] = 0;
-      }
    
+   //abre o arquivo para leitura binaria
+   matriz1 = fopen(argv[1], "rb");
+   if(!matriz1) {
+      fprintf(stderr, "Erro de abertura do arquivo 1\n");
+      return 2;
+   }
+      //abre o arquivo para leitura binaria
+   matriz2 = fopen(argv[2], "rb");
+   if(!matriz2) {
+      fprintf(stderr, "Erro de abertura do arquivo 2\n");
+      return 2;
+   }
+
+   //le as dimensoes da matrizUM
+   retMatriz1 = fread(&linhasMatriz1, sizeof(int), 1, matriz1);
+   if(!retMatriz1) {
+      fprintf(stderr, "Erro de leitura das dimensoes da matrizUM arquivo \n");
+      return 3;
+   }
+   retMatriz1 = fread(&colunasMatriz1, sizeof(int), 1, matriz1);
+   if(!retMatriz1) {
+      fprintf(stderr, "Erro de leitura das dimensoes da matrizUM arquivo \n");
+      return 3;
+   }
+      //le as dimensoes da matrizUM
+   retMatriz2 = fread(&linhasMatriz2, sizeof(int), 1, matriz2);
+   if(!retMatriz2) {
+      fprintf(stderr, "Erro de leitura das dimensoes da matrizUM arquivo \n");
+      return 3;
+   }
+   retMatriz2 = fread(&colunasMatriz2, sizeof(int), 1, matriz2);
+   if(!retMatriz2) {
+      fprintf(stderr, "Erro de leitura das dimensoes da matrizUM arquivo \n");
+      return 3;
+   }
+   tamMatriz1 = linhasMatriz1 * colunasMatriz1; //calcula a qtde de elementos da matrizUM
+   tamMatriz2 = linhasMatriz2 * colunasMatriz2; //calcula a qtde de elementos da matrizUM
+
+   //aloca memoria para a matrizUM
+   matrizUM = (float*) malloc(sizeof(float) * tamMatriz1);
+   if(!matrizUM) {
+      fprintf(stderr, "Erro de alocao da memoria da matrizUM\n");
+      return 3;
+   }
+   matrizDOIS= (float*) malloc(sizeof(float) * tamMatriz2);
+   if(!matrizDOIS) {
+      fprintf(stderr, "Erro de alocao da memoria da matrizDOIS\n");
+      return 3;
+   }
+   matrizSAIDA= (float*) malloc(sizeof(float) * tamMatriz2);
+   if(!matrizSAIDA) {
+      fprintf(stderr, "Erro de alocao da memoria da matrizDOIS\n");
+      return 3;
+   }
+
+   //carrega a matrizUM de elementos do tipo float do arquivo
+   retMatriz1 = fread(matrizUM, sizeof(float), tamMatriz1, matriz1);
+   if(retMatriz1 < tamMatriz1) {
+      fprintf(stderr, "Erro de leitura dos elementos da matrizUM\n");
+      return 4;
+   }
+
+      //carrega a matrizUM de elementos do tipo float do arquivo
+   retMatriz2 = fread(matrizDOIS, sizeof(float), tamMatriz2, matriz2);
+   if(retMatriz2 < tamMatriz2) {
+      fprintf(stderr, "Erro de leitura dos elementos da matrizUM\n");
+      return 4;
+   }
+   GET_TIME(inicio);
+   //imprime a matrizUM na saida padrao
+   for(int i=0; i<linhasMatriz1; i++) { 
+      for(int j=0; j<colunasMatriz1; j++){
+         //fprintf(stdout, "%.6f ", matrizUM[i*colunasMatriz1+j]);
+         for (int k = 0; k < linhasMatriz1; k++)
+         {
+            //saida[i*args->dim + j] += mat[i*args->dim + k] * matriz2[k*args->dim + j] ;
+            matrizSAIDA[i*colunasMatriz1+j] += matrizUM[i*linhasMatriz1 + k] * matrizDOIS[k*linhasMatriz1 + j] ;
+         }
+      }
    }
    GET_TIME(fim);
    delta = fim - inicio;
-   //printf("Tempo inicializacao:%lf\n", delta);
 
-   //multiplicacao da matriz pelo matriz2or
-   GET_TIME(inicio);
-   //alocacao das estruturas
-   tid = (pthread_t*) malloc(sizeof(pthread_t)*nthreads);
-   if(tid==NULL) {puts("ERRO--malloc"); return 2;}
-   args = (tArgs*) malloc(sizeof(tArgs)*nthreads);
-   if(args==NULL) {puts("ERRO--malloc"); return 2;}
-   //criacao das threads
-   for(int i=0; i<nthreads; i++) {
-      (args+i)->id = i;
-      (args+i)->dim = dim;
-      if(pthread_create(tid+i, NULL, tarefa, (void*) (args+i))){
-         puts("ERRO--pthread_create"); return 3;
-      }
-   } 
-   //espera pelo termino da threads
-   for(int i=0; i<nthreads; i++) {
-      pthread_join(*(tid+i), NULL);
+   for(int i=0; i<linhasMatriz1; i++) { 
+      for(int j=0; j<colunasMatriz1; j++)
+        fprintf(stdout, "%.6f ", matrizSAIDA[i*colunasMatriz1+j]);
+      fprintf(stdout, "\n");
    }
-   GET_TIME(fim)   
-   delta = fim - inicio;
-   printf("Tempo multiplicacao:%lf\n", delta);
+   printf("\nTempo multiplicacao:%lf\n", delta);
 
-   //exibicao dos resultados
-   /*puts("matriz2or de saida:");
-   for(int j=0; j<dim; j++)
-      printf("%.1f ", saida[j]);
-   puts("");
-   */
-
-   //liberacao da memoria
-   GET_TIME(inicio);
-   free(mat);
-   free(matriz2);
-   free(saida);
-   free(args);
-   free(tid);
-   GET_TIME(fim)   
-   delta = fim - inicio;
-   //printf("Tempo finalizacao:%lf\n", delta);
-
+   //finaliza o uso das variaveis
+   fclose(matriz1);
+   free(matrizUM);
    return 0;
 }
