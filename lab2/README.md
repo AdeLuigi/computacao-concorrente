@@ -29,4 +29,16 @@ Tempo total do algoritmo: 4.590434
 Tempo concorrente = (0.010719 + 4.579715)/(0.010719+(4.579715/T))
 
 ### Matriz 2000x2000
+| | Teste 1 | Teste 2 | Teste 3 | Média |
+|---|---|---|---|---|
+| **Tempo de leitura dos arquivos binários**        | 0.000505s | 0.001601s | 0.000622s | - |
+| **Tempo de alocação de memória**        | 0.004547s | 0.016270s | 0.017971s | - |
+| **Multiplicação** | 40.899598s | 41.814996s | 42.799465s | - |
+| **Tempo de criação do arquivo de saída**         | 0.024645s | 0.023829s | 0.025562s | - |
+
+Tempo total da parte que não envolve cpu bound: 0.028881
+Tempo de cpu bound: 40.899598
+Tempo total do algoritmo: 40.928478
+
+Tempo concorrente = (0.028881 + 40.89959)/(0.028881+(40.89959/T))
 
