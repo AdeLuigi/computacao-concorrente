@@ -129,18 +129,20 @@ int main(int argc, char*argv[]) {
    if(ret < tamSaida) {
       fprintf(stderr, "Erro de escrita no  arquivo\n");
       return 4;
+   }else{
+      printf("\nArquivo escrito com sucesso\n"); 
    }
 
 
    GET_TIME(fim);
    delta = fim - inicio;
 
-   for(int i=0; i<linhasMatriz1; i++) { 
-      for(int j=0; j<colunasMatriz1; j++)
-        fprintf(stdout, "%.6f ", matrizSAIDA[i*colunasMatriz1+j]);
-      fprintf(stdout, "\n");
-   }
-   printf("\nTempo multiplicacao:%lf\n", delta);
+   // for(int i=0; i<linhasMatriz1; i++) { 
+   //    for(int j=0; j<colunasMatriz1; j++)
+   //      fprintf(stdout, "%.6f ", matrizSAIDA[i*colunasMatriz1+j]);
+   //    fprintf(stdout, "\n");
+   // }
+   printf("\nTempo multiplicacao: %lf\n", delta);
 
    //finaliza o uso das variaveis
    fclose(matriz1);
