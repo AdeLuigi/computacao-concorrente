@@ -31,7 +31,7 @@ int main(int argc, char*argv[]) {
       fprintf(stderr, "Digite: %s <o primeiro arquivo entrada> <o segundo arquivo entrada> <arquivo de saida>\n", argv[0]);
       return 1;
    }
-   
+   GET_TIME(inicio);
    //abre o arquivo para leitura binaria
    matriz1 = fopen(argv[1], "rb");
    if(!matriz1) {
@@ -44,7 +44,12 @@ int main(int argc, char*argv[]) {
       fprintf(stderr, "Erro de abertura do arquivo 2\n");
       return 2;
    }
+   GET_TIME(fim);
+   delta = fim - inicio;
+   printf("\nTempo de leitura dos arquivos binários: %lf\n", delta);
 
+
+   GET_TIME(inicio);
    //le as dimensoes da matrizUM
    retMatriz1 = fread(&linhasMatriz1, sizeof(int), 1, matriz1);
    if(!retMatriz1) {
@@ -101,6 +106,11 @@ int main(int argc, char*argv[]) {
       fprintf(stderr, "Erro de leitura dos elementos da matrizUM\n");
       return 4;
    }
+
+   GET_TIME(fim);
+   delta = fim - inicio;
+   printf("\nTempo de alocação de memória: %lf\n", delta);
+
    GET_TIME(inicio);
    //imprime a matrizUM na saida padrao
    for(int i=0; i<linhasMatriz1; i++) { 
@@ -113,8 +123,13 @@ int main(int argc, char*argv[]) {
          }
       }
    }
+   GET_TIME(fim);
+   delta = fim - inicio;
+   printf("\nTempo multiplicacao: %lf\n", delta);
 
-      //escreve a matriz no arquivo
+
+   GET_TIME(inicio);
+   //escreve a matriz no arquivo
    //abre o arquivo para escrita binaria
    descritorArquivo = fopen(argv[3], "wb");
    if(!descritorArquivo) {
@@ -132,17 +147,15 @@ int main(int argc, char*argv[]) {
    }else{
       printf("\nArquivo escrito com sucesso\n"); 
    }
-
-
    GET_TIME(fim);
    delta = fim - inicio;
+   printf("\nTempo de criação do arquivo de saída: %lf\n", delta);
 
    // for(int i=0; i<linhasMatriz1; i++) { 
    //    for(int j=0; j<colunasMatriz1; j++)
    //      fprintf(stdout, "%.6f ", matrizSAIDA[i*colunasMatriz1+j]);
    //    fprintf(stdout, "\n");
    // }
-   printf("\nTempo multiplicacao: %lf\n", delta);
 
    //finaliza o uso das variaveis
    fclose(matriz1);
