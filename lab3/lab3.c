@@ -27,16 +27,17 @@ size_t retMatriz1; //retorno da funcao de leitura no arquivo de entrada
 size_t retMatriz2; //retorno da funcao de leitura no arquivo de entrada
 
 
-void *calculaMatrix() {
+void *calculaMatrix(void * arg) {
+  long int id = (long int) arg;
   //imprime a matrizUM na saida padrao
-  for (int i = 0; i < linhasMatriz1; i++) {
+  for (int i = id; i < linhasMatriz1; i += nthreads) {
     for (int j = 0; j < colunasMatriz2; j++) {
       for (int k = 0; k < linhasMatriz2; k++) {
         matrizSAIDA[i * colunasMatriz1 + j] += matrizUM[i * colunasMatriz1 + k] * matrizDOIS[k * colunasMatriz1 + j];
       }
     }
   }
-
+  pthread_exit((void *)matrizSAIDA);
 }
 
 int main(int argc, char * argv[]) {
@@ -44,6 +45,7 @@ int main(int argc, char * argv[]) {
   pthread_t *tid;
 
   double inicio, fim, delta;
+  int *retorno;
 
   FILE * descritorArquivo; //descritor do arquivo de saida
   size_t ret; //retorno da funcao de escrita no arquivo de saida
@@ -141,7 +143,25 @@ int main(int argc, char * argv[]) {
   printf("\nTempo de alocação de memória: %lf\n", delta);
 
   GET_TIME(inicio);
-  calculaMatrix(linhasMatriz1, colunasMatriz2, linhasMatriz2, matrizSAIDA, colunasMatriz1, matrizUM, matrizDOIS);
+
+  tid = (pthread_t *) malloc(sizeof(pthread_t) *nthreads);
+
+  //criar as threads
+  for(long int i=0;i<nthreads;i++){
+      if(pthread_create(tid+i, NULL, calculaMatrix, (void*) i)){
+          fprintf(stderr, "ERRO --- pthread_create\n");
+          return 3;
+      }
+  }
+
+      //aguardar o termino das threads
+    for(long int i=0; i<nthreads; i++){
+        if(pthread_join(*(tid+i), (void**) &retorno)){
+            fprintf(stderr, "ERRO --- pthread_join\n");
+            return 3;
+        }
+    }
+
   GET_TIME(fim);
 
   delta = fim - inicio;
