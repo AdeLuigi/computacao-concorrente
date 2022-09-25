@@ -15,9 +15,7 @@ float calculaMatrix(int linhasMatriz1, int colunasMatriz2, int linhasMatriz2, fl
   //imprime a matrizUM na saida padrao
   for (int i = 0; i < linhasMatriz1; i++) {
     for (int j = 0; j < colunasMatriz2; j++) {
-      //fprintf(stdout, "%.6f ", matrizUM[i*colunasMatriz1+j]);
       for (int k = 0; k < linhasMatriz2; k++) {
-        //saida[i*args->dim + j] += mat[i*args->dim + k] * matriz2[k*args->dim + j] ;
         matrizSAIDA[i * colunasMatriz1 + j] += matrizUM[i * colunasMatriz1 + k] * matrizDOIS[k * colunasMatriz1 + j];
       }
     }

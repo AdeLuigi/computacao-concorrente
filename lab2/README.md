@@ -45,3 +45,6 @@ Tempo total do algoritmo: 40.928478s
 Tempo concorrente = (0.028881 + 40.89959)/(0.028881+(40.89959/T))
 Aceleração concorrente em um cenário perfeito = 39.77959647422783
 
+## Corretude
+A corretude foi verificada utilizando o site https://matrix.reshish.com/multCalculation.php
+
