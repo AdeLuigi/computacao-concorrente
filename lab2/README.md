@@ -13,6 +13,7 @@ Tempo de cpu bound: 0.456882s
 Tempo total do algoritmo: 0.460912s
 
 Tempo concorrente = (0.004030 + 0.456882)/(0.004030+(0.456882/T))
+Aceleração concorrente em um cenário perfeito = 0.45906198021971456
 
 ### Matriz 1000x1000
 | | Teste 1 | Teste 2 | Teste 3 | Média |
@@ -27,6 +28,7 @@ Tempo de cpu bound: 4.579715s
 Tempo total do algoritmo: 4.590434s
 
 Tempo concorrente = (0.010719 + 4.579715)/(0.010719+(4.579715/T))
+Aceleração concorrente em um cenário perfeito = (0.010719 + 4.579715)/(0.010719+(4.579715/4.579715)) = 4.541750971338226
 
 ### Matriz 2000x2000
 | | Teste 1 | Teste 2 | Teste 3 | Média |
@@ -41,4 +43,5 @@ Tempo de cpu bound: 40.899598s
 Tempo total do algoritmo: 40.928478s
 
 Tempo concorrente = (0.028881 + 40.89959)/(0.028881+(40.89959/T))
+Aceleração concorrente em um cenário perfeito = 39.77959647422783
 
