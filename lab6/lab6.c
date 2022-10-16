@@ -1,115 +1,155 @@
 /* Disciplina: Computacao Concorrente */
 /* Prof.: Silvana Rossetto */
-/* Codigo: Implementação e uso de sincronização por barreira */
-// Aluno: Ademario Vitor
+/* Descricao: implementa  o problema dos leitores/escritores usando variaveis de condicao da biblioteca Pthread
+*/
 
-/***** Condicao logica da aplicacao: a cada iteracao, as threads fazem uma parte do processamento e só podem continuar depois que todas as threads completaram essa iteração. ****/
+#include<pthread.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
 
-#include <pthread.h>
+#define L 3 //numero de threads leitoras
+#define E 3 //numero de threads escritoras
 
-#include <stdio.h>
+//variaveis do problema
+int leit=0; //contador de threads lendo
+int escr=0; //contador de threads escrevendo
+int escritorLeitor=0; //contador de threads escrevendo
 
-#include <stdlib.h>
+//variaveis para sincronizacao
+int base_dados = 0;
+pthread_mutex_t mutex;
+pthread_cond_t cond_leit, cond_escr;
 
-#define NTHREADS 5
-#define PASSOS 5
-
-/* Variaveis globais */
-int bloqueadas = 0;
-pthread_mutex_t x_mutex;
-pthread_cond_t x_cond;
-int dimensao, * vetor; // dimensao passada pelo usuário e vetor
-
-//funcao barreira
-void barreira(int nthreads) {
-  pthread_mutex_lock( & x_mutex); //inicio secao critica
-  if (bloqueadas == (nthreads - 1)) {
-    //ultima thread a chegar na barreira
-    pthread_cond_broadcast( & x_cond);
-    bloqueadas = 0;
-  } else {
-    bloqueadas++;
-    pthread_cond_wait( & x_cond, & x_mutex);
-  }
-  pthread_mutex_unlock( & x_mutex); //fim secao critica
+//entrada leitura
+void InicLeit (int id) {
+   pthread_mutex_lock(&mutex);
+   printf("L[%d] quer ler\n", id);
+   while(escr > 0 || escritorLeitor > 0) {
+     printf("L[%d] bloqueou\n", id);
+     pthread_cond_wait(&cond_leit, &mutex);
+     printf("L[%d] desbloqueou\n", id);
+   }
+   leit++;
+   pthread_mutex_unlock(&mutex);
 }
 
-//funcao das threads
-void * tarefa(void * arg) {
-  int id = * (int * ) arg;
-  long int somatorio = 0;
-
-  for (int passo = 0; passo < dimensao; passo++) {
-
-    for (int i = 0; i < dimensao; i++) {
-      somatorio += * (vetor + i);
-    }
-    barreira(dimensao);
-
-    vetor[id] = (rand() % 10);
-    barreira(dimensao);
-
-  }
-  pthread_exit((void * ) somatorio);
+//saida leitura
+void FimLeit (int id) {
+   pthread_mutex_lock(&mutex);
+   printf("L[%d] terminou de ler\n", id);
+   leit--;
+   if(leit==0) pthread_cond_signal(&cond_escr);
+   pthread_mutex_unlock(&mutex);
 }
 
-/* Funcao principal */
-int main(int argc, char * argv[]) {
-  pthread_t threads[NTHREADS];
-  int id[NTHREADS];
-  long int somatorio;
-  long int * resultado;
+//entrada escrita
+void InicEscr (int id) {
+   pthread_mutex_lock(&mutex);
+   printf("E[%d] quer escrever\n", id);
+   while((leit>0) || (escr>0) || (escritorLeitor > 0)) {
+     printf("E[%d] bloqueou\n", id);
+     pthread_cond_wait(&cond_escr, &mutex);
+     printf("E[%d] desbloqueou\n", id);
+   }
+   escr++;
+   pthread_mutex_unlock(&mutex);
+}
 
-  /* Inicilaiza o mutex (lock de exclusao mutua) e a variavel de condicao */
-  pthread_mutex_init( & x_mutex, NULL);
-  pthread_cond_init( & x_cond, NULL);
+//saida escrita
+void FimEscr (int id) {
+   pthread_mutex_lock(&mutex);
+   printf("E[%d] terminou de escrever\n", id);
+   escr--;
+   pthread_cond_signal(&cond_escr);
+   pthread_cond_broadcast(&cond_leit);
+   pthread_mutex_unlock(&mutex);
+}
 
-  if (argc < 2) {
-    printf("Insira o %s a dimensao do vetor\n", argv[0]);
-    exit(1);
-  }
+//thread leitora
+void * T1 (void * arg) {
+  int *id = (int *) arg;
+  while(1) {
+    InicEscr(*id);
+    base_dados++;
+    printf("Escritora %d esta escrevendo\n", *id);
+    FimEscr(*id);
+    sleep(1);
+  } 
+  free(arg);
+  pthread_exit(NULL);
+}
 
-  dimensao = atoi(argv[1]);
-  resultado = (long int * ) malloc(sizeof(long int) * dimensao);
 
-  //alocaca memorias
-  vetor = (int * ) malloc(sizeof(int) * dimensao);
-  if (vetor == NULL) {
-    printf("ERRO--malloc\n");
-    return 2;
-  }
-
-  //inicia o vetor
-  for (int i = 0; i < dimensao; i++) {
-    *(vetor + i) = rand() % 10;
-  }
-
-  /* Cria as threads */
-  for (int i = 0; i < NTHREADS; i++) {
-    id[i] = i;
-    pthread_create( & threads[i], NULL, tarefa, (void * ) & id[i]);
-  }
-
-  /* Espera todas as threads completarem */
-  for (int i = 0; i < NTHREADS; i++) {
-    pthread_join(threads[i], (void ** ) & somatorio);
-    resultado[i] = somatorio;
-  }
-
-  //verifica se os retornos estão iguais 
-  for (int i = 1; i < dimensao; i++) {
-    if (resultado[i] != resultado[0]) {
-      printf("ERRO-- resultados não são iguais\n");
-      break;
+//thread leitora
+void * T2 (void * arg) {
+  int *id = (int *) arg;
+  while(1) {
+    InicLeit(*id);
+    if(base_dados % 2){
+      printf("Impar %d \n", base_dados);
+    }else{
+      printf("Par %d \n", base_dados);
     }
-    if (i == (dimensao - 1))
-      printf("Deu bom, resultados iguais, resultado = %ld\n", resultado[0]);
-  }
 
-  printf("FIM.\n");
+    FimLeit(*id);
+    sleep(1);
+  } 
+  free(arg);
+  pthread_exit(NULL);
+}
 
-  /* Desaloca variaveis e termina */
-  pthread_mutex_destroy( & x_mutex);
-  pthread_cond_destroy( & x_cond);
+
+void * leitor_escritor (void * arg) {
+  int *id = (int *) arg;
+
+  while(1) {
+    InicLeit(*id);
+    printf("LeitorEscritor[%d] (operação de leitura)\n", *id);
+    FimLeit(*id);
+
+    for (int i = 0; i < 10000; i++)
+    {
+      int bobo = 1;
+    }
+    InicEscr(*id);
+    base_dados = *id;
+    FimEscr(*id);
+    sleep(1);
+  } 
+  free(arg);
+  pthread_exit(NULL);
+}
+
+//funcao principal
+int main(void) {
+  //identificadores das threads
+  pthread_t tid[L+E];
+  int id[L+E];
+
+  //inicializa as variaveis de sincronizacao
+  pthread_mutex_init(&mutex, NULL);
+  pthread_cond_init(&cond_leit, NULL);
+  pthread_cond_init(&cond_escr, NULL);
+
+  //cria as threads leitoras
+  for(int i=0; i<L; i++) {
+    id[i] = i+1;
+    if(pthread_create(&tid[i], NULL, T2, (void *) &id[i])) exit(-1);
+  } 
+  
+  //cria as threads escritoras
+  for(int i=0; i<E; i++) {
+    id[i+L] = i+1;
+    if(pthread_create(&tid[i+L], NULL, T1, (void *) &id[i+L])) exit(-1);
+  } 
+
+
+  //cria as threads leitoras escritoras
+  for(int i=0; i<E; i++) {
+    id[i+L] = i+1;
+    if(pthread_create(&tid[i+L], NULL, leitor_escritor, (void *) &id[i+L])) exit(-1);
+  } 
+  pthread_exit(NULL);
   return 0;
 }
